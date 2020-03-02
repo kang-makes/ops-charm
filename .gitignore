@@ -1,0 +1,10 @@
+/include
+/lib
+/bin/*
+!/bin/preactivate
+!/bin/predeactivate
+!/bin/postactivate
+!/bin/postdeactivate
+
+__pycache__
+*.pyc

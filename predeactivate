@@ -1,0 +1,18 @@
+#!/bin/bash
+# This hook is sourced before every virtualenv is deactivated.
+
+test "X$(basename -- "$0")" = "Xpredeactivate" && echo "This file has to be sourced by virtualenvwrapper" && exit 1
+[ -f "$VIRTUAL_ENV/ops-charm.values" ] || return
+
+
+[ -z "$GOPASS_AGENT_PID" ] || kill "$GOPASS_AGENT_PID"
+
+for CLEAN in $OPS_CHARM_DECLARE_CLEAN; do
+  unset $CLEAN
+done
+
+for CLEAN in $OPS_CHARM_ALIAS_CLEAN; do
+  unalias $CLEAN
+done
+
+#PATH ya será limpiado por el propio virtualenv_wrapper

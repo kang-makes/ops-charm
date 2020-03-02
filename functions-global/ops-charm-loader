@@ -1,0 +1,12 @@
+if [ -z "$ENVIRONMENTS" ]; then
+  echo "\$ENVIRONMENTS has to be set for ops-charm to work"
+  echo "Set it on your basthrc or profile"
+  return
+fi
+
+export OPS_CHARM_HOME="$(realpath `dirname ${BASH_SOURCE[0]}`/..)"
+
+export VIRTUALENVWRAPPER_HOOK_DIR="$OPS_CHARM_HOME"
+export WORKON_HOME="$ENVIRONMENTS"
+
+source $(which virtualenvwrapper.sh)

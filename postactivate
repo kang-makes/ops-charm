@@ -1,0 +1,54 @@
+#!/bin/bash
+# This hook is sourced after every virtualenv is activated.
+
+test "X$(basename -- "$0")" = "Xpost_DECLAREactivate" && echo "This file has to be sourced by virtualenvwrapper" && exit 1
+[ -f "$VIRTUAL_ENV/ops-charm.values" ] || return
+
+local PRE_DECLARE="$(        declare -p | grep -e "^declare" | cut -d" " -f3 | cut -d= -f1 )"
+PRE_DECLARE="$PRE_DECLARE $( declare -F | grep -e "^declare" | cut -d" " -f3 | cut -d= -f1 )"
+local PRE_ALIAS="$(          alias      | grep -e "^alias"   | cut -d" " -f2 | cut -d= -f1 )"
+
+. "$VIRTUAL_ENV/ops-charm.values";
+
+mkdir -pv "$VIRTUAL_ENV/functions"
+mkdir -pv "$VIRTUAL_ENV/functions-global"
+mkdir -pv "$VIRTUAL_ENV/bin"
+mkdir -pv "$VIRTUAL_ENV/bin-global"
+
+if [ -f "$VIRTUAL_ENV/git/config" ]; then
+  alias git="XDG_CONFIG_HOME=$VIRTUAL_ENV git"
+fi
+
+if [ -f "$GNUPGHOME/sshcontrol" ]; then
+  export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
+  gpgconf --launch gpg-agent
+fi
+
+if [ -f "$GOPASS_CONFIG" ]; then
+  gopass agent &
+  GOPASS_AGENT_PID=$!
+  # TODO: More than one terminal with the same terminalenvironment activated.
+fi
+
+if [ -f "$VIRTUAL_ENV/ansible.cfg" ]; then
+  export ANSIBLE_CONFIG="$VIRTUAL_ENV/ansible.cfg"
+fi
+
+for bash_function_file in $VIRTUAL_ENV/functions/*; do
+  if [ -f $bash_function_file ]; then
+    . $bash_function_file
+  fi
+done
+
+local POST_DECLARE="$(         declare -p | grep -e "^declare" | cut -d" " -f3 | cut -d= -f1 )"
+POST_DECLARE="$POST_DECLARE $( declare -F | grep -e "^declare" | cut -d" " -f3 | cut -d= -f1 )"
+local POST_ALIAS="$(           alias      | grep -e "^alias"   | cut -d" " -f2 | cut -d= -f1 )"
+
+OPS_CHARM_DECLARE_CLEAN="$( comm -13 --nocheck-order \
+    <( echo -n "$PRE_DECLARE"  | tr " " $'\n' | grep -v -E "^(PRE_DECLARE|POST_DECLARE|PRE_ALIAS|POST_ALIAS)$") \
+    <( echo -n "$POST_DECLARE" | tr " " $'\n' | grep -v -E "^(PRE_DECLARE|POST_DECLARE|PRE_ALIAS|POST_ALIAS)$") \
+  )"
+OPS_CHARM_ALIAS_CLEAN="$( comm -13 --nocheck-order \
+    <( echo -n "$PRE_ALIAS"  | tr " " $'\n' | grep -v -E "^(PRE_DECLARE|POST_DECLARE|PRE_ALIAS|POST_ALIAS)$") \
+    <( echo -n "$POST_ALIAS" | tr " " $'\n' | grep -v -E "^(PRE_DECLARE|POST_DECLARE|PRE_ALIAS|POST_ALIAS)$") \
+  )"
