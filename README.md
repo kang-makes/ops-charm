@@ -1,10 +1,40 @@
 # ops-charm
 
-Is an automation tool for environment management.
+Is was automation tool for environment management.
 
-It allows to isolate a group of variables fron onw nevironment to another
+It allowed to isolate a group of variables fron own environment to another
 and initialize an GPG ssh agent, gopass agent automatically if some variables
-ans files exists.
+and files exists.
+
+This was overengineer and can be managed by a proper use of GPG keys mixed with some git magic like identity providing:
+
+> .config/git/config
+```toml
+[user]
+	useConfigOnly = true
+
+[alias]
+	identity = "! git config user.name \"$(git config user.$1.name)\"; git config user.email \"$(git config user.$1.email)\"; git config user.signingkey \"$(git config user.$1.signingkey)\"; :"
+	identity-list = "!identities() { git config --list --name-only | grep -E 'user\\..*\\.signingkey' | sed -e 's/^user\\.\\(.*\\)\\.signingkey/\\1/'; }; identities"
+
+[user "company"]
+	email = kang@a-company.es
+	name = A more serious name
+	signingkey = A SIGNING KEY
+
+[user "personal"]
+	email = devel@my-email.es
+	name = My name in github
+	signingkey = OTHER SIGNING KEY
+```
+
+Here no repository will have user and mail and a valid `git identity` has to be inserted for each repository.
+
+Environment variables could be sourced with dotenv files automatically by a (shell plugin)[https://github.com/ohmyzsh/ohmyzsh/blob/master/plugins/dotenv/dotenv.plugin.zsh]
+
+About mantaining developer environments its is prefered to use `poetry` or `pipenv` for python instead my approach or simply use the environment you need using `nix`.
+
+# Old README
 
 ## How it works and isolates environments.
 
